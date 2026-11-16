@@ -1,0 +1,32 @@
+{
+  "drawer.stl": {
+    "size_mm": [
+      240.0,
+      229.0,
+      84.0
+    ],
+    "min_xyz": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "triangles": 116,
+    "nonmanifold_edges": 0,
+    "connected_components": 1
+  },
+  "shell.stl": {
+    "size_mm": [
+      250.0,
+      180.0,
+      235.0
+    ],
+    "min_xyz": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "triangles": 29756,
+    "nonmanifold_edges": 0,
+    "connected_components": 1
+  }
+}

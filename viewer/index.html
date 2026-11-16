@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>全蜂窝双抽屉柜 | PrintLab</title>
+<link rel="stylesheet" href="./style.css">
+<script type="importmap">
+{"imports":{"three":"./vendor/build/three.module.min.js"}}
+</script>
+</head>
+<body>
+<main>
+  <section class="model" aria-labelledby="title">
+    <div id="stage" aria-label="双抽屉柜三维视口"></div>
+    <div class="heading">
+      <h1 id="title">全蜂窝双抽屉柜</h1>
+      <p><output id="dimensions">250 × 235 × 180</output> <span>mm</span></p>
+    </div>
+    <nav class="views" aria-label="观察方向">
+      <button data-view="iso" aria-pressed="true">等轴</button>
+      <button data-view="front" aria-pressed="false">正面</button>
+      <button data-view="side" aria-pressed="false">右侧</button>
+      <button data-view="top" aria-pressed="false">俯视</button>
+    </nav>
+    <div class="stage-footer"><span id="source" role="status">正在加载原始 STL</span><span class="gesture">拖动旋转 / 滚轮缩放 / 右键平移</span></div>
+  </section>
+  <aside aria-label="模型参数">
+    <div class="panel-heading"><h2>模型参数</h2><button id="reset" disabled>恢复默认</button></div>
+    <form id="params">
+      <fieldset id="fields" disabled>
+        <div class="section"><h3>抽屉行程 <small>mm</small></h3>
+          <div id="travel"></div>
+          <p class="hint" id="travel-note"></p>
+          <div class="actions">
+            <button type="button" id="closed">全部合上</button>
+            <button type="button" id="exploded" aria-pressed="false">爆炸视图</button>
+          </div>
+        </div>
+        <div class="section"><h3>柜体尺寸 <small>mm</small></h3><div id="size"></div></div>
+        <div class="section"><h3>蜂窝结构 <small>mm</small></h3><div id="lattice"></div></div>
+        <div class="section"><h3>中层滑轨 <small>mm</small></h3><div id="rails"></div></div>
+        <div class="section"><h3>配色 <small>Bambu PLA Basic</small></h3>
+          <label class="color"><span>外壳</span><span class="swatch" aria-hidden="true"></span><select id="shellColor"></select></label>
+          <label class="color"><span>抽屉</span><span class="swatch" aria-hidden="true"></span><select id="drawerColor"></select></label>
+        </div>
+      </fieldset>
+    </form>
+    <div class="section export">
+      <button type="button" id="export-stl" disabled>导出当前尺寸 STL</button>
+      <p class="hint" id="export-status" role="status">下载 ZIP 后，将外壳和抽屉 STL 导入 Bambu Studio，抽屉复制成 2 件。</p>
+    </div>
+  </aside>
+</main>
+<script type="module" src="./viewer.js"></script>
+</body>
+</html>

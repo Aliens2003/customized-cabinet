@@ -1,0 +1,14 @@
+[
+  {
+    "part": "shell_print",
+    "returncode": 0,
+    "elapsed": 143.07176566123962,
+    "log": "Geometries in cache: 696\nGeometry cache size in bytes: 4292400\nCGAL Polyhedrons in cache: 4\nCGAL cache size in bytes: 51883856\nTotal rendering time: 0:02:18.440\n   Top level object is a 3D object:\n   Simple:        yes\n   Vertices:    12760\n   Halfedges:   38284\n   Edges:       19142\n   Halffacets:  12766\n   Facets:       6383\n   Volumes:         2\n"
+  },
+  {
+    "part": "drawer",
+    "returncode": 0,
+    "elapsed": 0.620542049407959,
+    "log": "Geometries in cache: 17\nGeometry cache size in bytes: 41632\nCGAL Polyhedrons in cache: 3\nCGAL cache size in bytes: 131296\nTotal rendering time: 0:00:00.350\n   Top level object is a 3D object:\n   Simple:        yes\n   Vertices:       60\n   Halfedges:     180\n   Edges:          90\n   Halffacets:     64\n   Facets:         32\n   Volumes:         2\n"
+  }
+]

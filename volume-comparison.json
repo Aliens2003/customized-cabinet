@@ -1,0 +1,9 @@
+{
+  "current_shell_cm3": 470.0406391781586,
+  "current_drawer_cm3": 312.6746537791357,
+  "current_complete_cm3": 1095.38994673643,
+  "previous_270mm_shell_cm3": 1026.4744901571112,
+  "previous_270mm_complete_cm3": 1779.8982560027885,
+  "complete_geometry_reduction_percent": 38.45772121849229,
+  "note": "Size and wall thickness also changed; geometric volume is not sliced filament usage."
+}
