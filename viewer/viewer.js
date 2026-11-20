@@ -1,7 +1,9 @@
 import { plaBasicColors } from './pla-basic.js';
 import * as THREE from 'three';
 import { OrbitControls } from './vendor/examples/jsm/controls/OrbitControls.js';
-import { STLLoader } from './vendor/examples/jsm/loaders/STLLoader.js';
+import { GLTFLoader } from './vendor/examples/jsm/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from './vendor/examples/jsm/libs/meshopt_decoder.module.js';
+import { verticalLayout as calculateLayout, railLimits, gripLayout } from './geometry-parameters.js';
 
 const byId = (id) => document.getElementById(id);
 const stage = byId('stage');
@@ -23,9 +25,9 @@ const originalTrayHeight = 78;
 // Match cabinet.scad: leave at least 1 mm above the lower tray.
 const maxRailThickness = originalUpperLevel - originalWall - originalTrayHeight - 1;
 const dimensions = [
-  ['width', '宽度', 250, 120, 256, 1],
-  ['depth', '深度', 235, 100, 256, 1],
-  ['height', '高度', 180, 100, 256, 1],
+  ['width', '宽度', 250, 30, 256, 1],
+  ['depth', '深度', 235, 30, 256, 1],
+  ['height', '高度', 180, 30, 256, 1],
   ['wall', '柜体壁厚', originalWall, 2, 8, 1],
   ['hex_flat', '孔对边', 12, 8, 18, 1],
   ['hex_web', '蜂窝筋宽', 2.4, 2, 4, 0.2],
@@ -45,16 +47,8 @@ const colorsByCode = new Map(plaBasicColors.map(([code, , hex]) => [code, hex]))
 const drawerDepth = () => values.depth - values.wall - rearClearance;
 // Preserve the 1 mm reinforcement on the top panel.
 const topThickness = () => values.wall + 1;
-const originalFaceHeight = 84;
 function verticalLayout() {
-  // Split extra cabinet height equally, preserving the original assembly gaps.
-  const growth = (values.height - defaults.height) / 2;
-  const drawerGrowth = growth - (values.wall - originalWall);
-  return {
-    upperLevel: originalUpperLevel + growth,
-    faceHeight: originalFaceHeight + drawerGrowth,
-    trayHeight: originalTrayHeight + drawerGrowth,
-  };
+  return calculateLayout(values);
 }
 const trayWall = 2.4;
 const floor = 2.4;
@@ -68,6 +62,7 @@ let shell, upper, lower, originals, renderer, controls;
 let exploded = false;
 let view = 'iso';
 let rebuildFrame = 0;
+let framedDimensions = '';
 
 function rectangle(width, height) {
   return [[0, 0], [width, 0], [width, height], [0, height]];
@@ -163,19 +158,17 @@ function parametricDrawer() {
   const depth = drawerDepth();
   const group = new THREE.Group();
   // The rounded grip extends above the SCAD face, leaving an open notch.
-  const left = width / 2 - 28;
-  const right = width / 2 + 28;
-  const bottom = faceHeight - 10;
+  const { left, right, radius, bottom } = gripLayout(width, faceHeight);
   const front = new THREE.Shape();
   front.moveTo(0, 0);
   front.lineTo(width, 0);
   front.lineTo(width, faceHeight);
-  front.lineTo(right + 4, faceHeight);
-  front.lineTo(right + 4, bottom);
-  front.absarc(right, bottom, 4, 0, -Math.PI / 2, true);
-  front.lineTo(left, bottom - 4);
-  front.absarc(left, bottom, 4, -Math.PI / 2, -Math.PI, true);
-  front.lineTo(left - 4, faceHeight);
+  front.lineTo(right + radius, faceHeight);
+  front.lineTo(right + radius, bottom);
+  front.absarc(right, bottom, radius, 0, -Math.PI / 2, true);
+  front.lineTo(left, bottom - radius);
+  front.absarc(left, bottom, radius, -Math.PI / 2, -Math.PI, true);
+  front.lineTo(left - radius, faceHeight);
   front.lineTo(0, faceHeight);
   front.closePath();
   const frontMesh = new THREE.Mesh(extrusion(front, face), drawerMaterial);
@@ -204,6 +197,16 @@ function syncFrameLimit() {
   for (const input of fields.get('frame')) {
     input.min = minimum;
     input.value = values.frame;
+  }
+}
+function syncRailLimits() {
+  const limits = railLimits(values);
+  for (const [id, max] of [['rail_projection', limits.projection], ['rail_thickness', limits.thickness]]) {
+    values[id] = Math.min(values[id], max);
+    for (const input of fields.get(id)) {
+      input.max = max;
+      input.value = values[id];
+    }
   }
 }
 function syncTravelLimits() {
@@ -236,6 +239,7 @@ function rebuild() {
   cabinet.clear();
   for (const geometry of dispose) geometry.dispose();
   syncFrameLimit();
+  syncRailLimits();
   const useSTL = originals && dimensions.every(([id]) => values[id] === defaults[id]);
   shell = useSTL ? new THREE.Mesh(originals.shell, shellMaterial) : parametricShell();
   upper = useSTL ? new THREE.Mesh(originals.drawer, drawerMaterial) : parametricDrawer();
@@ -245,7 +249,12 @@ function rebuild() {
   placeDrawers();
   syncColors();
   byId('dimensions').value = [values.width, values.depth, values.height].join(' × ');
-  source.textContent = useSTL ? '原始 STL · 装配预览' : '参数化预览 · 尚未切片';
+  source.textContent = useSTL ? '原始模型 · 装配预览' : '参数化预览 · 尚未切片';
+  const sizeKey = [values.width, values.depth, values.height].join(',');
+  if (sizeKey !== framedDimensions && controls) {
+    framedDimensions = sizeKey;
+    setView(view);
+  }
 }
 
 function setView(name) {
@@ -268,7 +277,8 @@ function updateParameter(id, value, geometry) {
   values[id] = value;
   for (const field of fields.get(id)) field.value = value;
   if (geometry) {
-    if (id === 'wall') syncFrameLimit();
+    syncFrameLimit();
+    syncRailLimits();
     if (id === 'depth' || id === 'wall') syncTravelLimits();
     cancelAnimationFrame(rebuildFrame);
     rebuildFrame = requestAnimationFrame(rebuild);
@@ -354,6 +364,22 @@ async function downloadSTL() {
   }
 }
 
+function previewGeometry(mesh) {
+  const geometry = mesh.geometry.clone();
+  // Meshopt stores quantized positions. Expand before applying millimeter transforms.
+  for (const name of ['position', 'normal']) {
+    const attribute = geometry.getAttribute(name);
+    const array = new Float32Array(attribute.count * 3);
+    for (let index = 0; index < attribute.count; index++) {
+      array[index * 3] = attribute.getX(index);
+      array[index * 3 + 1] = attribute.getY(index);
+      array[index * 3 + 2] = attribute.getZ(index);
+    }
+    geometry.setAttribute(name, new THREE.BufferAttribute(array, 3));
+  }
+  return geometry.applyMatrix4(mesh.matrixWorld);
+}
+
 async function start() {
   addControls(pulls, 'travel', false);
   for (const [id, defaultCode] of Object.entries(colorDefaults)) {
@@ -400,17 +426,24 @@ async function start() {
   };
   refreshSize();
   new ResizeObserver(refreshSize).observe(stage);
-  const loader = new STLLoader();
+  const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
   try {
-    const [shell, drawer] = await Promise.all([
-      loader.loadAsync('../stl/shell.stl'), loader.loadAsync('../stl/drawer.stl'),
-    ]);
-    // Undo the shell's back-down print orientation before applying the shared Y-up transform.
+    const gltf = await loader.loadAsync('../previews/defaults.glb');
+    gltf.scene.updateMatrixWorld(true);
+    const shellMesh = gltf.scene.getObjectByName('shell');
+    const drawerMesh = gltf.scene.getObjectByName('drawer');
+    const shell = previewGeometry(shellMesh);
+    const drawer = previewGeometry(drawerMesh);
+    gltf.scene.traverse((object) => {
+      object.geometry?.dispose();
+      if (object.material) object.material.dispose();
+    });
+    // The source shell was exported back-down for printing.
     shell.translate(0, 0, -defaults.depth);
     shell.rotateX(Math.PI / 2);
     originals = { shell, drawer };
   } catch (error) {
-    console.warn('Original STL could not be loaded. Showing the parametric geometry.', error);
+    console.warn('Compressed preview could not be loaded. Showing parametric geometry.', error);
   }
   rebuild();
   setView('iso');

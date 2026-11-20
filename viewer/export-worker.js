@@ -1,10 +1,11 @@
+import { verticalLayout, railLimits } from './geometry-parameters.js';
 import OpenSCAD from './vendor/openscad/openscad.js';
 
 // Validate geometry parameters before running OpenSCAD in the browser.
 const LIMITS = {
-  width: [120, 256, 1],
-  depth: [100, 256, 1],
-  height: [100, 256, 1],
+  width: [30, 256, 1],
+  depth: [30, 256, 1],
+  height: [30, 256, 1],
   wall: [2, 8, 1],
   hex_flat: [8, 18, 1],
   hex_web: [2, 4, 0.2],
@@ -37,14 +38,17 @@ function design(data) {
   if (data.frame < data.wall + 1) {
     throw new Error('边框宽度须至少等于顶板厚度。');
   }
-  const growth = (data.height - 180) / 2;
-  const drawerGrowth = growth - (data.wall - 4);
+  const limits = railLimits(data);
+  if (data.rail_projection > limits.projection || data.rail_thickness > limits.thickness) {
+    throw new Error('滑轨尺寸超出当前柜体可用空间，请重新调整。');
+  }
+  const { upperLevel, faceHeight, trayHeight } = verticalLayout(data);
   return {
     ...data,
     top_thickness: data.wall + 1,
-    upper_level: 90 + growth,
-    face_height: 84 + drawerGrowth,
-    tray_height: 78 + drawerGrowth,
+    upper_level: upperLevel,
+    face_height: faceHeight,
+    tray_height: trayHeight,
   };
 }
 
@@ -253,13 +257,17 @@ self.addEventListener('message', async ({ data }) => {
     const settings = design(data.settings);
     report('正在加载 OpenSCAD 引擎…');
     const shell = await render(settings, 'shell_print', '外壳');
-    validateStl(shell, [settings.width, settings.height, settings.depth]);
+    try { validateStl(shell, [settings.width, settings.height, settings.depth]); } catch (error) { throw new Error('外壳：' + error.message); }
     const drawer = await render(settings, 'drawer', '抽屉');
-    validateStl(drawer, [
-      settings.width - 2 * (settings.wall + 1),
-      settings.depth - settings.wall - 2,
-      settings.face_height,
-    ]);
+    try {
+      validateStl(drawer, [
+        settings.width - 2 * (settings.wall + 1),
+        settings.depth - settings.wall - 2,
+        settings.face_height,
+      ]);
+    } catch (error) {
+      throw new Error('抽屉：' + error.message);
+    }
     report('正在打包 ZIP…');
     const zip = zipStore([
       { name: 'cabinet-shell.stl', data: shell },

@@ -33,6 +33,7 @@ assert(hex_web>=2 && frame>=wall);
 module hex_holes(w,h){
  r=hex_flat/sqrt(3); dx=hex_flat+hex_web; dy=dx*sqrt(3)/2;
  rows=floor((h-2*r)/dy)+1;
+ if(rows>0 && w>=hex_flat)
  for(j=[0:rows-1])let(cy=h/2+(j-(rows-1)/2)*dy)
  for(k=[-ceil(w/dx):ceil(w/dx)])let(cx=w/2+(k+(j%2)/2)*dx)
  if(cx-hex_flat/2>=0 && cx+hex_flat/2<=w)
@@ -68,9 +69,17 @@ module shell(){
  }
 }
 module grip(){
- translate([drawer_width/2,face_thickness+eps,face_height-14])rotate([90,0,0])linear_extrude(face_thickness+2*eps)
- hull(){for(x=[-28,28],z=[4,22])translate([x,z])circle(r=4);}
+ radius=min(4,face_height/4,drawer_width/12);
+ half_span=min(28,(drawer_width-2*radius-2)/2);
+ bottom=face_height-min(14,face_height-drawer_floor-0.6)+radius;
+ translate([drawer_width/2,face_thickness+eps,0])rotate([90,0,0])
+ linear_extrude(face_thickness+2*eps)
+ hull(){
+  for(x=[-half_span,half_span],z=[bottom,face_height+radius+eps])
+   translate([x,z])circle(r=radius,$fn=32);
+ }
 }
+
 module drawer(){
  difference(){
  union(){
