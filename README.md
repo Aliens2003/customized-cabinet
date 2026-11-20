@@ -37,7 +37,7 @@
 
 ## Three.js 交互预览
 
-从项目目录运行 `python viewer/serve.py`，然后打开 http://127.0.0.1:8765/viewer/ 。可在命令末尾追加端口号。Three.js r180 来自官方 npm 软件包，MIT 许可见 `viewer/vendor/LICENSE`，本地预览无需联网。
+从项目目录运行 `python viewer/serve.py`，然后打开 http://127.0.0.1:8765/viewer/ 。可在命令末尾追加端口号。也可以把仓库按现状部署到任意静态托管（例如 GitHub Pages 的仓库根目录），页面路径为 `/viewer/`。Three.js r180 来自官方 npm 软件包，MIT 许可见 `viewer/vendor/LICENSE`，本地预览无需联网。
 
 默认装配加载原始外壳和抽屉 STL，下抽屉拉出 60 mm。修改柜体宽深高、孔对边、蜂窝筋宽或周边框宽时，页面依据 cabinet.scad 的布局生成预览几何，保留滑轨连接带。颜色和行程只影响当前视图。“恢复默认”重新显示原始 STL。参数化几何仅用于浏览器预览，未做切片和实物验证。
 
@@ -61,8 +61,8 @@ Three.js 柜体宽、深、高下限分别为 120、100、100 mm，上限均为 
 
 ### 导出当前尺寸 STL
 
-打开 http://127.0.0.1:8766/viewer/ 并点击「导出当前尺寸 STL」。重启命令为 `python viewer/serve.py 8766`（从项目目录运行）。服务通过本机 OpenSCAD 生成实体，也可用环境变量 `OPENSCAD_PATH` 指定 OpenSCAD 可执行文件。
+在页面中点击「导出当前尺寸 STL」。STL 由 OpenSCAD 的 WebAssembly 构建（`viewer/vendor/openscad`，GPL-2.0，许可证见同目录 `COPYING`）在浏览器内生成，使用 Manifold 后端；首次点击需下载约 11 MB 引擎，之后走浏览器缓存，不依赖本机安装 OpenSCAD。`viewer/serve.py` 仍可用于本地静态预览，页面已不再调用其中的 `/export-stl` 接口。
 
-解压下载的 ZIP，将 `cabinet-shell.stl` 和 `cabinet-drawer.stl` 导入 Bambu Studio。外壳已经背板朝下摆放，抽屉文件在 Studio 里复制为 2 件。颜色、抽屉开合和爆炸视图是显示设置。生成器检查两件的尺寸、落板位置、网格闭合性和连通性。Chrome 已实测非默认组合 160 × 110 × 121 mm 下载，未在 Studio 实际切片。
+解压下载的 ZIP，将 `cabinet-shell.stl` 和 `cabinet-drawer.stl` 导入 Bambu Studio。外壳已经背板朝下摆放，抽屉文件在 Studio 里复制为 2 件。颜色、抽屉开合和爆炸视图是显示设置。生成器检查两件的尺寸、落板位置、网格闭合性和连通性，规则与 `viewer/export_stl.py` 一致。Chrome 已实测默认 250 × 235 × 180 mm 与 200 × 235 × 180 mm 导出，未在 Studio 实际切片。
 
 网页顶部页眉已移除，模型和参数面板从页顶开始。已通过预览服务读回 HTML 和样式。

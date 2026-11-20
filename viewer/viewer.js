@@ -299,6 +299,35 @@ function addControls(definitions, container, geometry) {
   }
 }
 
+let exportWorker;
+
+function exportArchive(settings, status) {
+  exportWorker ??= new Worker('./export-worker.js', { type: 'module' });
+  const worker = exportWorker;
+  return new Promise((resolve, reject) => {
+    const onMessage = ({ data }) => {
+      if (data.type === 'progress') {
+        status.textContent = data.text;
+        return;
+      }
+      worker.removeEventListener('message', onMessage);
+      worker.removeEventListener('error', onError);
+      if (data.ok) resolve(data.zip);
+      else reject(new Error(data.message));
+    };
+    const onError = () => {
+      worker.removeEventListener('message', onMessage);
+      worker.removeEventListener('error', onError);
+      worker.terminate();
+      exportWorker = undefined;
+      reject(new Error('导出引擎加载失败，请刷新页面后重试。'));
+    };
+    worker.addEventListener('message', onMessage);
+    worker.addEventListener('error', onError);
+    worker.postMessage({ settings });
+  });
+}
+
 async function downloadSTL() {
   const button = byId('export-stl');
   const status = byId('export-status');
@@ -306,19 +335,10 @@ async function downloadSTL() {
   const settings = Object.fromEntries(dimensions.map(([id]) => [id, values[id]]));
   const size = [settings.width, settings.depth, settings.height].join('x');
   button.disabled = true;
-  status.textContent = `正在生成 ${size} mm 的外壳和抽屉，蜂窝较密时可能需要几分钟。`;
+  status.textContent = `正在准备 ${size} mm 的外壳和抽屉，首次导出需下载约 11 MB 引擎…`;
   try {
-    const response = await fetch('../export-stl', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(settings),
-    });
-    if (!response.ok) {
-      const detail = response.headers.get('Content-Type')?.startsWith('text/plain')
-        ? await response.text() : '请重启预览服务后再试。';
-      throw new Error(detail);
-    }
-    const url = URL.createObjectURL(await response.blob());
+    const archive = await exportArchive(settings, status);
+    const url = URL.createObjectURL(new Blob([archive], { type: 'application/zip' }));
     const link = document.createElement('a');
     link.href = url;
     link.download = `cabinet-${size}-stl.zip`;
