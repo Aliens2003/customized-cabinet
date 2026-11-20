@@ -69,8 +69,9 @@ module shell(){
  }
 }
 module grip(){
- radius=min(4,face_height/4,drawer_width/12);
- half_span=min(28,(drawer_width-2*radius-2)/2);
+ scale=drawer_width/240; // The original 240 mm drawer has a 64 mm grip.
+ radius=min(4*scale,face_height/4);
+ half_span=32*scale-radius;
  bottom=face_height-min(14,face_height-drawer_floor-0.6)+radius;
  translate([drawer_width/2,face_thickness+eps,0])rotate([90,0,0])
  linear_extrude(face_thickness+2*eps)

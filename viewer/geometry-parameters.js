@@ -17,8 +17,9 @@ export function railLimits(settings) {
 }
 
 export function gripLayout(width, height) {
-  const radius = Math.min(4, height / 4, width / 12);
-  const halfSpan = Math.min(28, (width - 2 * radius - 2) / 2);
+  const scale = width / 240; // The original 240 mm drawer has a 64 mm grip.
+  const radius = Math.min(4 * scale, height / 4);
+  const halfSpan = 32 * scale - radius;
   return {
     radius,
     left: width / 2 - halfSpan,
