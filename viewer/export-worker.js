@@ -1,6 +1,6 @@
 import OpenSCAD from './vendor/openscad/openscad.js';
 
-// Mirrors viewer/export_stl.py LIMITS and design().
+// Validate geometry parameters before running OpenSCAD in the browser.
 const LIMITS = {
   width: [120, 256, 1],
   depth: [100, 256, 1],
