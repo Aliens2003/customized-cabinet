@@ -59,7 +59,7 @@ module shell(){
  union(){
  side_panel();translate([width-wall,0,0])side_panel();
  linear_extrude(wall)panel_2d(width,depth);
- translate([0,0,height-top_thickness])linear_extrude(top_thickness)panel_2d(width,depth);
+ translate([0,0,height-top_thickness])cube([width,depth,top_thickness]);
  translate([0,depth,0])rotate([90,0,0])linear_extrude(wall)panel_2d(width,height);
  // One upper rail per side; joined to the narrow attachment belt.
  for(x=[wall,width-wall-rail_projection]){

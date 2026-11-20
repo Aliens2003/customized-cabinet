@@ -132,12 +132,11 @@ function parametricShell() {
   const { width, depth, height, wall, rail_projection: railProjection, rail_thickness: railThickness } = values;
   const group = new THREE.Group();
   const bottom = panel(width, depth, wall);
-  const top = panel(width, depth, topThickness());
-  top.position.z = height - topThickness();
+  box(group, shellMaterial, width, depth, topThickness(), 0, 0, height - topThickness());
   const back = panel(width, height, wall);
   back.rotation.x = Math.PI / 2;
   back.position.y = depth;
-  group.add(bottom, top, back);
+  group.add(bottom, back);
   const basis = new THREE.Matrix4().makeBasis(
     new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1), new THREE.Vector3(1, 0, 0),
   );
